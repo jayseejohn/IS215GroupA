@@ -147,7 +147,11 @@
           <div class="col-md-6 col-lg-4">
             <div class="box">
               <div class="img-box">
+<<<<<<< HEAD
                 <img style="height: 200px; object-fit: cover;" src="assets/images/User_Icon.png" alt="">
+=======
+                <img style="height: 200px; object-fit: cover;" src="assets/images/mmangibin.jpg" alt="">
+>>>>>>> 55b0430614eb24d17911450c3d294b1d2e324236
               </div>
               <div class="detail-box">
                 <h5>
