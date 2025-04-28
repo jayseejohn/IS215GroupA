@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins&family=Rubik&display=swap");
+
+body {
+  font-family: "Nunito", sans-serif !important;
+}
+.poppins {
+  font-family: "Poppins", sans-serif;
+}
+
+.rubik {
+  font-family: "Rubik", sans-serif;
+}
+
+.nunito {
+  font-family: "Nunito", sans-serif;
+}
+
+.calistoga {
+  font-family: "Calistoga", sans-serif;
+}
