@@ -36,8 +36,6 @@ const getPrompt = (labels) => {
   prompt += 'Please write a short, engaging, news article describing the scene in an informative way.';
   prompt += 'Your response must be raw and in a valid json format only without any other extra values or "json" at the start of your response. The json response must have 2 keys, title and article_content.';
   prompt += 'The value of the title key must be the title related to the news article.';
-  prompt += 'With regards to the article content value, feel free to add emphasis to certain portions in the news article';
-  prompt += 'using html tags like <b> html tags. Only use html tags and do not use markdown tags like asterisks for emphasizing certain portions.';
   prompt += "Feel free to be creative but the article's title and content must be closely related to the elements described from Amazon Rekognition.";
 
   return prompt;
@@ -84,7 +82,23 @@ const processImage = (formData) => {
         }
 
         if (response.error !== undefined) {
-          customAlert('error', "Oops!", '', response.error);
+          var errorMessage = response.error;
+          
+          if (response.error == 'Image contains unsafe content') {
+            var list = '';
+            list += '<ul class="list-unstyled">';
+            $.each(response.flaggedLabels, function (key, value) {
+              list += `<li>
+                          Content: <b>${value.name}</b> 
+                          Confidence: <b>${value.confidence}</b>
+                      </li>`;
+            });
+            list += '</ul>';
+            
+            errorMessage = `${response.error} <br /> <br />${list}`;
+          }
+
+          customAlert('error', "Oops!", '', errorMessage);
           hideLoader();
           return;
         }
@@ -95,6 +109,9 @@ const processImage = (formData) => {
         const fileName = response.fileName;
         const imageUrl = response.imageUrl;
         let generatedLabels = `${labels.join(', ')}`;
+
+        console.log(labels);
+        console.log(labels.length);
 
         $('#labels-container').after(generatedLabels);
         generateArticle(labels, fileName, imageUrl);
@@ -157,17 +174,19 @@ const generateArticle = (labels, fileName, imageUrl) => {
           fileName: fileName,
           title: messageContent.title,
           article: messageContent.article_content,
-          imageUrl: imageUrl
+          imageUrl: imageUrl,
+          labels: labels
         };
-
-        var expiration = 3600000; // Test for 1hr
         
-        // Store to local storage
+        // Store to local storage with 1hr expiration
+        var expiration = 3600000;
         storeToLocalStorage(fileName, value, expiration);
+        var tags = getTags(labels);
 
         var messageHtml = `
             <img src="${imageUrl}" class="w-100" alt="${fileName}" />
             <h3 class="text-center my-5"><b>${messageContent.title}</b></h3>
+            <p class="text-center">${tags}</p>
             <div class="container bg-light p-3 border rounded-4">${messageContent.article_content}</div>
         `;
         
@@ -218,7 +237,7 @@ const getAllLocalStorageItems = () => {
   return items;
 }
 
-function loadFromLocalStorage(key) {
+const loadFromLocalStorage = (key) => {
   var values = localStorage.getItem(key);
   if (!values) {
     return null
@@ -234,27 +253,45 @@ function loadFromLocalStorage(key) {
   return item.value;
 }
 
-function loadAllStoredArticles() {
+const loadAllStoredArticles = () => {
   var articles = getAllLocalStorageItems();
 
-  $('#generated-articles').html('');
   if (articles !== null) {
+    $('#generated-articles').html('');
     $.each(articles, function (key, values) {
         let item = loadFromLocalStorage(key);
+        console.log(item);
+        
+        if (item === null) {
+          return false;
+        }
+        var labels = null;
+        if (item.labels !== undefined && item.labels.length > 0) {
+          labels = item.labels;
+        }
+
+        var tags = getTags(labels);
+
+        var content = {
+          imageUrl: item.imageUrl,
+          fileName: item.fileName,
+          title: item.title.substring(0, 50)+'...',
+          tags: tags,
+          article: item.article.substring(0, 250)
+        };
+        
+        var articleBody = getArticleBody(content);
+
         var html = `
           <div class="col-md-4">
-            <div class="card mt-3">
-              <div class="col-md-12 p-0" id="article-image-container">
-                <img src="${item.imageUrl}" class="card-img-top" alt="${item.fileName}">
-              </div>
-              <div class="card-body p-0">
-                <h5 class="card-title m-0 p-3">
-                  <b>${item.title.substring(0, 50)}...</b>
-                </h5>
-                <p class="card-text bg-light p-4 border">
-                  ${item.article.substring(0, 250)}...
-                </p>
-              </div>
+            <div class="card article-card mt-3 articles-container"
+              data-image="${item.imageUrl}"
+              data-file_name="${item.fileName}"
+              data-title="${item.title}"
+              data-article="${item.article}"
+              data-labels="${labels}"
+            >
+              ${articleBody}
             </div>
           </div>
         `;
@@ -264,11 +301,41 @@ function loadAllStoredArticles() {
   }
 }
 
+const getTags = (labels) => {
+  var tags = '';
+  if (labels !== null) {
+    $.each(labels, function (index, label) {
+      tags += `<span class="badge badge-primary mr-1">${label}</span>`;
+    });
+  }
+  return tags;
+}
+
+const getArticleBody = (content) => {
+  return `<div class="col-md-12 p-0">
+            <img src="${content.imageUrl}" class="card-img-top object-fit-cover" alt="${content.fileName}">
+          </div>
+          <div class="card-body p-0">
+            <h5 class="card-title m-0 p-3 text-center">
+              <b>${content.title}</b>
+            </h5>
+            <p class="tags text-center">${content.tags}</p>
+            <p class="card-text bg-light p-4 border article-content">
+              ${content.article}
+            </p>
+          </div>`;
+}
+
 
 $(function (){
-    // localStorage.clear();
-    loadAllStoredArticles();
+    $('#generated-articles').html(`
+      <div class="container alert alert-info p-5 text-center">
+        No generated articles found. Go to <a href="/upload.php">upload</a> page first.
+      </div>
+    `);
 
+    loadAllStoredArticles();
+    
     $('#form').on('submit', function(e) {    
         e.preventDefault();
         e.stopPropagation();
@@ -292,5 +359,36 @@ $(function (){
         
         formData.append('file', file);
         processImage(formData);
+    });
+
+    $(document).on('click', '.articles-container', function () {
+      $('#loader-container').addClass('d-none');
+      $('#modal #articles-container').removeClass('d-none');
+
+      var targetElement = $('#articles-modal-container');
+      var imageUrl = $(this).data('image');
+      var fileName = $(this).data('file_name');
+      var title = $(this).data('title');
+      var article = $(this).data('article');
+      var labels = $(this).data('labels');
+      labels = labels.split(',');
+
+      var tags = getTags(labels);
+
+      var content = {
+        imageUrl: imageUrl,
+        fileName: fileName,
+        title: title,
+        tags: tags,
+        article: article
+      };
+
+      var articleBody = getArticleBody(content);
+      
+      targetElement.html('');
+      var html = `<div class="card mt-3">${articleBody}</div>`;
+      targetElement.html(html);
+      $('#modal').modal('toggle');
+
     });
 })

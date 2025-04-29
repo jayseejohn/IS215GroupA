@@ -890,14 +890,28 @@ header.header_section {
   font-size: 20px !important;
 }
 
-.card-img-top {
+.card {
+  cursor:  pointer !important;
+}
+
+#form-container {
+  padding: 100px !important;
+}
+
+.article-card .article-content {
+  height: 27vh !important;
+  overflow: hidden;
+}
+
+.article-card .card-img-top {
   width: 100%;
   height: 30vh;
   object-fit: cover !important;
 }
 
-#form-container {
-  padding: 100px !important;
+.article-card .tags {
+  height: 10vh !important;
+  align-content: center;
 }
 
 @media only screen and (max-width: 600px) {

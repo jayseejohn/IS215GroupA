@@ -47,15 +47,15 @@
         </a>
       </div>
       <div class="quote_btn-container mx-2 navbar__links-item">
-        <a href="index.php">
-          <i class="fa fa-home" aria-hidden="true"></i>
+        <a href="articles.php">
+          <i class="fa fa-newspaper-o" aria-hidden="true"></i>
           <span>
-            View Articles
+            Generated Articles
           </span>
         </a>
       </div>
       <div class="quote_btn-container mx-2 navbar__links-item">
-        <a href="upload.php">
+        <a href="index.php">
           <i class="fa fa-upload" aria-hidden="true"></i>
           <span>Upload</span>
         </a>
