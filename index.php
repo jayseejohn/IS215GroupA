@@ -166,6 +166,3 @@
 </section>
 
 <?php include('footer.php') ?>
-apps-fileview.texmex_20250417.00_p3
-index.text
-Displaying index.text.
