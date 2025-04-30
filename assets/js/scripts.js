@@ -330,7 +330,7 @@ const getArticleBody = (content) => {
 $(function (){
     $('#generated-articles').html(`
       <div class="container alert alert-info p-5 text-center">
-        No generated articles found. Go to <a href="/upload.php">upload</a> page first.
+        No generated articles found. Go to <a href="/index.php">upload</a> page first.
       </div>
     `);
 
