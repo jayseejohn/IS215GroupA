@@ -914,6 +914,14 @@ header.header_section {
   align-content: center;
 }
 
+.navbar-brand {
+  width: 50%;
+}
+
+.navbar-brand img {
+  width: 30%;
+}
+
 @media only screen and (max-width: 600px) {
   .heading_container h2 {
     text-align: center;
@@ -929,5 +937,9 @@ header.header_section {
 
   #form-container {
     padding: 20px !important;
+  }
+
+  .navbar-brand img {
+    width: 100%;
   }
 }

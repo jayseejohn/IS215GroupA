@@ -22,7 +22,7 @@
   <nav class="navbar navbar-expand-lg custom_nav-container">
     <a class="navbar-brand" href="index.php">
       <span>
-        <img src="assets/images/logo.png">
+        <img src="assets/images/logo.png" alt="Logo" />
       </span>
     </a>
     <button class="navbar-toggler" 
