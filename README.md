@@ -104,12 +104,6 @@ bucket and are set properly to your Lambda function.
 
 	b. Click **Configuration tab** > **Triggers**. Under Triggers, you should see the API Gateway trigger and an API endpoint similar to this `https://4nmgqp7rhi.execute-api.us-east-1.amazonaws.com/project/process-uploaded-image`. You need this endpoint to communicate from your machine to AWS Lambda function for this project. **Check the sample image for reference**.
 
-  
-
-You can now upload the `lambda.zip` file to your created AWS lambda function, under **Code** tab.
-
-  
-  
 
 #### CURL REQUEST METHOD
 
@@ -131,7 +125,9 @@ Parameters:
 
 `filename` => `Name of the file`,
 
-`contentType` => *`(eg. images/jpg, images/png)`*
+`contentType` => *`(eg. images/jpg, images/png)`*,
+
+`bucketName` => *`for security purposes`*
 
   
 
