@@ -154,6 +154,13 @@ const generateArticle = (labels, fileName, imageUrl) => {
       },
       success: function (response) {
         console.log(response);
+
+        if (response.error !== undefined) {
+          customAlert('error', "OpenAI Error", '', response.error.message);
+          hideLoader();
+          return;
+        }
+
         if (response.message !== undefined) {
           customAlert('error', "Oops!", response.message, '');
           hideLoader();
