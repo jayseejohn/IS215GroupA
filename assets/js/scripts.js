@@ -29,14 +29,20 @@ const customAlert = (type, title, text, html = '') => {
     });
 }
 
-const getPrompt = (labels) => {
+const getPrompt = (labels, faceDetection) => {
   let prompt = "";
 
-  prompt += 'I uploaded an image that contains the following elements from Amazon Rekognition: ' + labels.join(', ');
-  prompt += 'Please write a short, engaging, news article describing the scene in an informative way.';
-  prompt += 'Your response must be raw and in a valid json format only without any other extra values or "json" at the start of your response. The json response must have 2 keys, title and article_content.';
-  prompt += 'The value of the title key must be the title related to the news article.';
-  prompt += "Feel free to be creative but the article's title and content must be closely related to the elements described from Amazon Rekognition.";
+  prompt += 'I uploaded an image to S3 and processed it using Amazon Rekognition label detection which responded that the image contains the following elements: ' + labels.join(', ');
+  
+  if (faceDetection !== null) {
+    prompt += '. The image also contains a result from Amazon Rekognition face detection with the following information: ' + faceDetection;
+    prompt += '. Do not describe the image literally like mentioning specific features like age, etc.';
+  }
+
+  prompt += '. Please write a short, engaging, news article based from the results from AWS.';
+  prompt += ' Your response must be raw and in a valid json format only without any other extra values or "json" at the start of your response. The json response must have 2 keys, title and article_content.';
+  prompt += ' The value of the title key must be the title related to the news article.';
+  prompt += " Feel free to be creative but the article's title and content must be closely related to the elements described from Amazon Rekognition but do not mention Amazon in any way in your response.";
 
   return prompt;
 }
@@ -105,16 +111,48 @@ const processImage = (formData) => {
 
         console.log(response);
 
-        const labels = response.labels.map(label => label.Name);
-        const fileName = response.fileName;
-        const imageUrl = response.imageUrl;
-        let generatedLabels = `${labels.join(', ')}`;
+        var faceDetectionResult = response.faceDetectionResult;
+        var faceDetection = null;
 
-        console.log(labels);
-        console.log(labels.length);
+        if (faceDetectionResult.FaceDetails && faceDetectionResult.FaceDetails.length > 0) {
+          var face = faceDetectionResult.FaceDetails[0];
+
+          var topEmotion = face.Emotions.reduce(function (prev, current) {
+            return current.Confidence > prev.Confidence ? current : prev;
+          });
+        
+          faceDetection = {
+            ageRange: face.AgeRange,
+            gender: face.Gender,
+            smile: face.Smile,
+            eyeglasses: face.Eyeglasses,
+            sunglasses: face.Sunglasses,
+            beard: face.Beard,
+            mustache: face.Mustache,
+            eyesOpen: face.EyesOpen,
+            mouthOpen: face.MouthOpen,
+            topEmotion: {
+              type: topEmotion.Type,
+              confidence: topEmotion.Confidence
+            },
+            boundingBox: face.BoundingBox,
+            pose: face.Pose,
+            quality: face.Quality,
+            faceOccluded: face.FaceOccluded,
+            eyeDirection: face.EyeDirection
+          };
+
+          faceDetection = JSON.stringify(faceDetection, null, 2);
+        }
+
+        var labels = response.labels.map(label => label.Name);
+        var fileName = response.fileName;
+        var imageUrl = response.imageUrl;
+        var generatedLabels = `${labels.join(', ')}`;
 
         $('#labels-container').after(generatedLabels);
-        generateArticle(labels, fileName, imageUrl);
+        
+        generateArticle(labels, fileName, imageUrl, faceDetection);
       },
       error: function (response) {
         console.log(response);
@@ -130,8 +168,10 @@ const processImage = (formData) => {
   }
 }
 
-const generateArticle = (labels, fileName, imageUrl) => {
-  let prompt = getPrompt(labels);
+const generateArticle = (labels, fileName, imageUrl, faceDetection) => {
+  let prompt = getPrompt(labels, faceDetection);
+  console.log(prompt);
+
   let messages = [
           { role: 'system', content: 'You are a creative and brilliant writer that turns image data into news articles.' },
           { role: 'user', content: prompt }
